@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 public class CurrencyConversionController {
 
 	@Autowired
-	private Environment environment;
+	private CurrencyExchangeServiceProxy proxy;
 	
 	@GetMapping("/currency-converter/from/{from}/to/{to}/quantity/{quantity}")
 	public CurrencyConversionBean convertCurrency(@PathVariable String from, @PathVariable String to, @PathVariable BigDecimal quantity) {
@@ -25,6 +25,13 @@ public class CurrencyConversionController {
 		uriVariables.put("to", to);
 		ResponseEntity<CurrencyConversionBean> forEntity = new RestTemplate().getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversionBean.class, uriVariables );
 		CurrencyConversionBean response = forEntity.getBody();
+		return new CurrencyConversionBean(response.getId(), response.getFrom(), response.getTo(), response.getConversionMultiple(), quantity, quantity.multiply(response.getConversionMultiple()), response.getPort());
+	}
+	
+	
+	@GetMapping("/currency-converter-feign/from/{from}/to/{to}/quantity/{quantity}")
+	public CurrencyConversionBean convertCurrencyFeign(@PathVariable String from, @PathVariable String to, @PathVariable BigDecimal quantity) {
+		CurrencyConversionBean response = proxy.retrieveExchangeValue(from, to);
 		return new CurrencyConversionBean(response.getId(), response.getFrom(), response.getTo(), response.getConversionMultiple(), quantity, quantity.multiply(response.getConversionMultiple()), response.getPort());
 	}
 }
